@@ -1,41 +1,35 @@
-#pragma once
+#ifndef __MYSQL_H__
+#define __MYSQL_H__
 
-#include "core.h"
-using namespace core;
+#include <iostream>
+#include <mysql/mysql.h>
 
-namespace mysql {
+using namespace std;
 
-#include <../include/mysql.h>
+class MySQL{
+	MYSQL *conn;
+	MYSQL_RES *res;
+	MYSQL_FIELD *fields;
+	virtual bool exec(string sql);
+	virtual bool storeResult();
+	virtual int getRowCount();
+	virtual int getFieldCount();
+	virtual string getFieldValue(int rowIndex, int fieldIndex);
+public:
+	MySQL();
+	~MySQL();
+	virtual bool init();
+	virtual bool connect(string host, string user, string password, string db);
+	virtual int active(string sql);
+	virtual string getFieldValue(int rowIndex, string fieldName);
+	/*virtual bool query(String sql);
+	virtual void freeResult();
 
-#ifdef OS_WINDOWS
-	#pragma comment (lib, "libmysql.lib")
+	virtual String getEscapeString(String s);
+	virtual String getEscapeString(char *s, int len);
+
+
+	virtual int getLastId();*/
+};
+
 #endif
-
-
-	class MySQL : public Object {
-		MYSQL *conn;
-		MYSQL_RES *res;
-		MYSQL_FIELD *fields;
-	public:
-		MySQL();
-		~MySQL();
-		virtual bool init();
-		virtual bool connect(String host, String user, String password, String db);
-		virtual bool query(String sql);
-		virtual bool exec(String sql);
-		virtual int active(String sql);
-		virtual bool storeResult();
-		virtual void freeResult();
-
-		virtual String getEscapeString(String s);
-		virtual String getEscapeString(char *s, int len);
-
-		virtual int getRowCount();
-		virtual int getFieldCount();
-		virtual String getFieldValue(int rowIndex, int fieldIndex);
-		virtual String getFieldValue(int rowIndex, String fieldName);
-
-		virtual int getLastId();
-	};
-
-}

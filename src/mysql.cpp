@@ -1,10 +1,5 @@
 #include "mysql.h"
 
-namespace mysql {
-
-	//--------------------------------------------------------------------------------------------------
-	//----------          class MySQL          ---------------------------------------------------------
-	//--------------------------------------------------------------------------------------------------
 	MySQL::MySQL() {
 		conn = NULL;
 		res = NULL;
@@ -17,48 +12,63 @@ namespace mysql {
 	bool MySQL::init() {
 		conn = mysql_init(NULL);
 		if (conn == NULL) {
-			application->logger_out("Error: can't create MySQL-descriptor");
+			cout << "Error: can't create MySQL-descriptor" << endl;
 			return false;
 		}
-		application->logger_out("MySQL-descriptor was created!");
+		cout << "MySQL-descriptor was created!" << endl;
 		return true;
 	}
-	bool MySQL::connect(String host, String user, String password, String db) {
-		application->logger_out("MySQL connect");
+	bool MySQL::connect(string host, string user, string password, string db) {
+		cout << "MySQL connect" << endl;
 		try {
-			string host8 = host.to_string();
-			string user8 = user.to_string();
-			string pswd8 = password.to_string();
-			string db8 = db.to_string();
-			if (!mysql_real_connect(conn, host.to_string().c_str(), user.to_string().c_str(), password.to_string().c_str(), db.to_string().c_str(), NULL, NULL, 0)) {
-				String error = mysql_error(conn);
-				application->logger_out("Error: can't connect to database");
+			if (!mysql_real_connect(conn, host.c_str(), user.c_str(), password.c_str(), db.c_str(), 0, NULL, 0)) {
+				cout << "Error: can't connect to database" << endl;
 				return false;
 			}
 		}
 		catch (...) {
-			application->logger_out("connect catch");
+			cout << "connect catch" << endl;
 			return false;
 		}
-		application->logger_out("Connected to database!");
+		cout << "Connected to database!" << endl;
 		return true;
 	}
-	bool MySQL::query(String sql) {
+	
+	
+	bool MySQL::exec(string sql) {
 		if (res != NULL) mysql_free_result(res);
-		if (mysql_query(conn, sql.to_string().c_str()) != 0) {
-			application->logger_out("Error: mistake in SQL");
-			return false;
-		}
-		return true;
-	}
-	bool MySQL::exec(String sql) {
-		if (mysql_query(conn, sql.to_string().c_str()) != 0)
+		if (mysql_query(conn, sql.c_str()) != 0)
 		{
+			cout << "Error: mistake in SQL" << endl;
 			return false;
 		}
 		return true;
 	}
-	int MySQL::active(String sql) {
+
+	bool MySQL::storeResult() { 
+		if (res != NULL) mysql_free_result(res);
+		res = mysql_store_result(conn);
+		fields = mysql_fetch_fields(res);
+		if (res) return true;
+		return false;
+	}
+
+	string MySQL::getFieldValue(int rowIndex, int fieldIndex) {
+		mysql_data_seek(res, rowIndex);
+		MYSQL_ROW row = mysql_fetch_row(res);
+		if (row[fieldIndex] == NULL) return "";
+		return (string)row[fieldIndex];
+	}
+
+	int MySQL::getRowCount() {
+		return mysql_num_rows(res);
+	}
+	int MySQL::getFieldCount() {
+		int count = mysql_num_fields(res);
+		return count;
+	}
+
+	int MySQL::active(string sql) {
 		if (exec(sql)) {
 			if (storeResult()) {
 				int count = getRowCount();
@@ -67,13 +77,27 @@ namespace mysql {
 		}
 		return 0;
 	}
-	bool MySQL::storeResult() {
-		if (res != NULL) mysql_free_result(res);
-		res = mysql_store_result(conn);
-		fields = mysql_fetch_fields(res);
-		if (res) return true;
-		return false;
+
+	string MySQL::getFieldValue(int rowIndex, string fieldName) {
+		//	MYSQL_ROW row = mysql_fetch_row(res);
+		int count = mysql_num_fields(res);
+		for (int i = 0; i < count; i++) {
+			if (fieldName == (string)fields[i].name) {
+				return getFieldValue(rowIndex, i);
+			}
+		}
+		return "";
 	}
+	/*
+	bool MySQL::query(string sql) {
+		if (res != NULL) mysql_free_result(res);
+		if (mysql_query(conn, sql.c_str()) != 0) {
+			cout << "Error: mistake in SQL" << endl;
+			return false;
+		}
+		return true;
+	}
+
 	void MySQL::freeResult() {
 		if (res != NULL) mysql_free_result(res);
 		res = NULL;
@@ -98,29 +122,6 @@ namespace mysql {
 
 		return sRes;
 	}
-	int MySQL::getRowCount() {
-		return mysql_num_rows(res);
-	}
-	int MySQL::getFieldCount() {
-		int count = mysql_num_fields(res);
-		return count;
-	}
-	String MySQL::getFieldValue(int rowIndex, int fieldIndex) {
-		mysql_data_seek(res, rowIndex);
-		MYSQL_ROW row = mysql_fetch_row(res);
-		if (row[fieldIndex] == NULL) return "";
-		return (String)row[fieldIndex];
-	}
-	String MySQL::getFieldValue(int rowIndex, String fieldName) {
-		//	MYSQL_ROW row = mysql_fetch_row(res);
-		int count = mysql_num_fields(res);
-		for (int i = 0; i < count; i++) {
-			if (fieldName == (String)fields[i].name) {
-				return getFieldValue(rowIndex, i);
-			}
-		}
-		return "";
-	}
 	int MySQL::getLastId() {
 		String sql = "select LAST_INSERT_ID();";
 		if (this->exec(sql)) {
@@ -133,6 +134,4 @@ namespace mysql {
 			}
 		}
 		return 0;
-	}
-
-}
+	}*/
